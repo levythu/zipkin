@@ -20,3 +20,4 @@ _site/
 # temporary directory used by travis/publish.sh for building gh-pages
 /javadoc-builddir
 .DS_Store
+.remote-sync.json
