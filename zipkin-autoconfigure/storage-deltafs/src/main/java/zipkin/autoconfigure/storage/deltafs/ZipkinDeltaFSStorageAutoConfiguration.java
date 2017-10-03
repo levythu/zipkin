@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import zipkin.storage.StorageComponent;
 import zipkin.storage.InMemoryStorage;
+import zipkin.storage.deltafs.DeltaFSStorage;
 
 
 @Configuration
@@ -34,9 +35,8 @@ public class ZipkinDeltaFSStorageAutoConfiguration {
     @Bean StorageComponent storage(
       @Value("${zipkin.storage.strict-trace-id:true}") boolean strictTraceId,
       @Value("${zipkin.storage.mem.max-spans:500000}") int maxSpans) {
-      return InMemoryStorage.builder()
+      return DeltaFSStorage.builder()
         .strictTraceId(strictTraceId)
-        .maxSpanCount(maxSpans)
         .build();
     }
 
