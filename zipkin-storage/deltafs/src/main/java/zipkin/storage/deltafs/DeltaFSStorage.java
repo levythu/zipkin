@@ -17,6 +17,7 @@ import zipkin.storage.StorageAdapters;
 public final class DeltaFSStorage implements StorageComponent {
 
   public static Builder builder() {
+    DeltaFSShuffler.GetInstance();
     return new Builder();
   }
 
