@@ -10,10 +10,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.lang.Throwable;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
 import zipkin.DependencyLink;
 import zipkin.Span;
+import zipkin.Codec;
 import zipkin.storage.SpanStore;
 import zipkin.storage.StorageAdapters;
 import zipkin.storage.QueryRequest;
@@ -81,6 +83,11 @@ public final class DeltaFSSpanStore implements SpanStore {
 
   synchronized void addSpans(List<Span> spans) {
     // TODO: to implement
+    for (Span sp : spans) {
+      try {
+        LOG.warn(new String(Codec.JSON.writeSpan(sp), "UTF-8"));
+      } catch (Throwable e) {}
+    }
     return;
   }
 
