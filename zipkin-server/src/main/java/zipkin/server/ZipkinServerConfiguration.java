@@ -30,7 +30,7 @@ import zipkin.collector.CollectorSampler;
 import zipkin.internal.V2StorageComponent;
 import zipkin.server.brave.TracedStorageComponent;
 import zipkin.storage.StorageComponent;
-import zipkin2.storage.InMemoryStorage;
+import zipkin.storage.InMemoryStorage;
 
 @Configuration
 public class ZipkinServerConfiguration {
@@ -92,14 +92,14 @@ public class ZipkinServerConfiguration {
     @Bean StorageComponent storage(
       @Value("${zipkin.storage.strict-trace-id:true}") boolean strictTraceId,
       @Value("${zipkin.storage.mem.max-spans:500000}") int maxSpans) {
-      return V2StorageComponent.create(InMemoryStorage.newBuilder()
+      return InMemoryStorage.builder()
         .strictTraceId(strictTraceId)
         .maxSpanCount(maxSpans)
-        .build());
+        .build();
     }
 
-    @Bean InMemoryStorage v2Storage(V2StorageComponent component) {
-      return (InMemoryStorage) component.delegate();
-    }
+    // @Bean InMemoryStorage v2Storage(V2StorageComponent component) {
+    //   return (InMemoryStorage) component.delegate();
+    // }
   }
 }

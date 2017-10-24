@@ -24,6 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import javax.annotation.Nullable;
 import zipkin.DependencyLink;
 import zipkin.Span;
@@ -32,10 +36,14 @@ import zipkin.internal.DependencyLinker;
 import zipkin.internal.GroupByTraceId;
 import zipkin.internal.MergeById;
 import zipkin.internal.Pair;
+import zipkin.Codec;
 
 import static zipkin.internal.ApplyTimestampAndDuration.guessTimestamp;
 import static zipkin.internal.GroupByTraceId.TRACE_DESCENDING;
 import static zipkin.internal.Util.sortedList;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Internally, spans are indexed on 64-bit trace ID
@@ -94,14 +102,33 @@ public final class InMemorySpanStore implements SpanStore {
   final int maxSpanCount;
   volatile int acceptedSpanCount;
 
+  private OutputStream outfile;
+  private byte[] separator;
+
+  private static final Logger LOG = LoggerFactory.getLogger(InMemorySpanStore.class);
+
   // Historical constructor
   public InMemorySpanStore() {
     this(new InMemoryStorage.Builder());
+    try {
+      outfile = Files.newOutputStream(Paths.get("/tmp/zipkinTrace.txt"), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+      LOG.warn("Created file");
+    } catch (Throwable e) {
+      LOG.warn(e.toString());
+    }
+    separator = (new String("\n")).getBytes();
   }
 
   InMemorySpanStore(InMemoryStorage.Builder builder) {
     this.strictTraceId = builder.strictTraceId;
     this.maxSpanCount = builder.maxSpanCount;
+    try {
+      outfile = Files.newOutputStream(Paths.get("/tmp/zipkinTrace.txt"), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+      LOG.warn("Created file");
+    } catch (Throwable e) {
+      LOG.warn(e.toString());
+    }
+    separator = (new String("\n")).getBytes();
   }
 
   final StorageAdapters.SpanConsumer spanConsumer = new StorageAdapters.SpanConsumer() {
@@ -139,6 +166,10 @@ public final class InMemorySpanStore implements SpanStore {
     int spansToRecover = (spansByTraceIdTimeStamp.size() + delta) - maxSpanCount;
     evictToRecoverSpans(spansToRecover);
     for (Span span : spans) {
+      try {
+        outfile.write(Codec.JSON.writeSpan(span));
+        outfile.write(separator);
+      } catch (Throwable e) {}
       Long timestamp = guessTimestamp(span);
       Pair<Long> traceIdTimeStamp =
         Pair.create(span.traceId, timestamp == null ? Long.MIN_VALUE : timestamp);
