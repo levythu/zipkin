@@ -48,7 +48,10 @@
   </dependencyManagement>
 
   <dependencies>
-    
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>zipkin</artifactId>
+      </dependency>
   </dependencies>
 
   <profiles>
