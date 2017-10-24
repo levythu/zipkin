@@ -34,6 +34,7 @@
     <module>zipkin-collector</module>
     <module>zipkin-autoconfigure</module>
     <module>zipkin-server</module>
+    <module>trace-autoplayer</module>
   </modules>
 
   <properties>
@@ -225,6 +226,12 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>zipkin-autoconfigure-storage-deltafs</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>trace-autoplayer</artifactId>
         <version>${project.version}</version>
       </dependency>
 
