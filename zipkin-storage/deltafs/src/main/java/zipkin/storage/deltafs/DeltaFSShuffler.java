@@ -51,6 +51,7 @@ public final class DeltaFSShuffler {
 
   public DeltaFSShuffler() {
     rpcSockets = new ArrayList<DeltaFSKVStore.Client>();
+    isBatching = false;
     try {
       connect();
       rpcSockets.get(0).append("traces", "key", "value");
@@ -63,7 +64,36 @@ public final class DeltaFSShuffler {
   /****************************************************************************/
   // Write related methods
 
+  private static boolean isBatching;
+
+  private static ArrayList<ArrayList<String>> batchMdName;
+  private static ArrayList<ArrayList<String>> batchKey;
+  private static ArrayList<ArrayList<String>> batchValue;
+
   public static final String deliminator = ":SPL:";
+
+  public void batchAppendStart() {
+    batchKey = new ArrayList<ArrayList<String>>();
+    batchValue = new ArrayList<ArrayList<String>>();
+    batchMdName = new ArrayList<ArrayList<String>>();
+    for (int i = 0; i < RPC_WRAPPER_PORT.length; i++) {
+      batchKey.add(new ArrayList<String>());
+      batchValue.add(new ArrayList<String>());
+      batchMdName.add(new ArrayList<String>());
+    }
+    isBatching = true;
+  }
+
+  public void batchAppendEnd() {
+    for (int i = 0; i < RPC_WRAPPER_PORT.length; i++) {
+      try {
+        rpcSockets.get(i).appendBatch(batchMdName.get(i), batchKey.get(i), batchValue.get(i));
+      } catch (TException e) {
+        LOG.warn("ThriftException:" + e.getMessage());
+      }
+    }
+    isBatching = false;
+  }
 
   public void append(String mdName, String key, String val) {
     int bucketNumber = key.hashCode() % RPC_WRAPPER_HOST.length;
@@ -74,12 +104,19 @@ public final class DeltaFSShuffler {
     for (int i = 0; i < RPC_WRAPPER_HOST.length; i++) {
       if (hostname.equals(RPC_WRAPPER_HOST[i])) {
         appendBucket(mdName, key, val, i);
+        return;
       }
     }
     LOG.warn("Cannot find rpc host: " + hostname);
   }
 
   private void appendBucket(String mdName, String key, String val, int bucketNumber) {
+    if (isBatching) {
+      batchMdName.get(bucketNumber).add(mdName);
+      batchKey.get(bucketNumber).add(key);
+      batchValue.get(bucketNumber).add(val + deliminator);
+      return;
+    }
     try {
       rpcSockets.get(bucketNumber).append(mdName, key, val + deliminator);
     } catch (TException e) {

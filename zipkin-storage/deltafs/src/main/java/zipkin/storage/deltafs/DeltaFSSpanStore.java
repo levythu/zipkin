@@ -46,14 +46,20 @@ public final class DeltaFSSpanStore implements SpanStore {
   final int maxSpanCount;
   volatile int acceptedSpanCount;
 
+  private DeltaFSShuffler deltafsShuffler;
+
   // Historical constructor
   public DeltaFSSpanStore() {
     this(new DeltaFSStorage.Builder());
+    deltafsShuffler = DeltaFSShuffler.GetInstance();
+    if (deltafsShuffler == null) LOG.error("DeltaFSRPC not ready!");
   }
 
   DeltaFSSpanStore(DeltaFSStorage.Builder builder) {
     this.strictTraceId = builder.strictTraceId;
     this.maxSpanCount = builder.maxSpanCount;
+    deltafsShuffler = DeltaFSShuffler.GetInstance();
+    if (deltafsShuffler == null) LOG.error("DeltaFSRPC not ready!");
   }
 
   final StorageAdapters.SpanConsumer spanConsumer = new StorageAdapters.SpanConsumer() {
@@ -83,11 +89,19 @@ public final class DeltaFSSpanStore implements SpanStore {
 
   synchronized void addSpans(List<Span> spans) {
     // TODO: to implement
+    deltafsShuffler.batchAppendStart();
     for (Span sp : spans) {
       try {
-        LOG.warn(new String(Codec.JSON.writeSpan(sp), "UTF-8"));
-      } catch (Throwable e) {}
+        String idStr = Long.toString(sp.id);
+        String json = new String(Codec.JSON.writeSpan(sp), "UTF-8");
+        deltafsShuffler.append("traces", idStr, json);
+        String spanNamePair = idStr + "/" + sp.name;
+        deltafsShuffler.appendHost("services", "me", spanNamePair, "localhost");
+      } catch (Throwable e) {
+        LOG.warn("Exception in appending spans: " + e.toString());
+      }
     }
+    deltafsShuffler.batchAppendEnd();
     return;
   }
 
