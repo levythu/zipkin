@@ -13,11 +13,19 @@ import zipkin.storage.SpanStore;
 import zipkin.storage.StorageComponent;
 import zipkin.storage.InMemoryStorage;
 import static zipkin.storage.Callback.NOOP;
+import zipkin.storage.deltafs.DeltaFSStorage;
 
 public class Entry {
 
   private StorageComponent getTestedStorageComponent() {
-    return InMemoryStorage.builder()
+    // In-mem:
+    // return InMemoryStorage.builder()
+    //   .strictTraceId(true)
+    //   .maxSpanCount(Integer.MAX_VALUE)
+    //   .build();
+
+    // DeltaFS:
+    return DeltaFSStorage.builder()
       .strictTraceId(true)
       .maxSpanCount(Integer.MAX_VALUE)
       .build();

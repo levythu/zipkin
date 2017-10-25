@@ -30,6 +30,11 @@ public final class DeltaFSStorage implements StorageComponent {
       return this;
     }
 
+    public Builder maxSpanCount(int maxSpanCount) {
+      this.maxSpanCount = maxSpanCount;
+      return this;
+    }
+
     @Override
     public DeltaFSStorage build() {
       return new DeltaFSStorage(this);

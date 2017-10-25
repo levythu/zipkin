@@ -52,6 +52,11 @@
         <groupId>${project.groupId}</groupId>
         <artifactId>zipkin</artifactId>
       </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>zipkin-storage-deltafs</artifactId>
+      </dependency>
   </dependencies>
 
   <profiles>
