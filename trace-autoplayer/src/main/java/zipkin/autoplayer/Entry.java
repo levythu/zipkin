@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.lang.Throwable;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.Date;
+import javax.annotation.Nullable;
 
 import zipkin.Span;
 import zipkin.Codec;
@@ -13,22 +15,23 @@ import zipkin.storage.SpanStore;
 import zipkin.storage.StorageComponent;
 import zipkin.storage.InMemoryStorage;
 import static zipkin.storage.Callback.NOOP;
+import zipkin.storage.Callback;
 import zipkin.storage.deltafs.DeltaFSStorage;
 
 public class Entry {
 
   private StorageComponent getTestedStorageComponent() {
     // In-mem:
-    // return InMemoryStorage.builder()
-    //   .strictTraceId(true)
-    //   .maxSpanCount(Integer.MAX_VALUE)
-    //   .build();
-
-    // DeltaFS:
-    return DeltaFSStorage.builder()
+    return InMemoryStorage.builder()
       .strictTraceId(true)
       .maxSpanCount(Integer.MAX_VALUE)
       .build();
+
+    // DeltaFS:
+    // return DeltaFSStorage.builder()
+    //   .strictTraceId(true)
+    //   .maxSpanCount(Integer.MAX_VALUE)
+    //   .build();
   }
 
   public static int parseCmdLine(String[] args, int pos, int def) {
@@ -54,12 +57,30 @@ public class Entry {
     return count;
   }
 
+  public Long task = 0L;
+  public Long lastTS = 0L;
+  public long totalRecord = 0L;
+
   public void putInStorage(String[] str, int len, StorageComponent storage) {
     ArrayList<Span> spans = new ArrayList<Span>();
     for (int i = 0; i < len; i++) {
       spans.add(Codec.JSON.readSpan(str[i].getBytes()));
     }
-    storage.asyncSpanConsumer().accept(spans, NOOP);
+    synchronized (task) {
+      task = task + 1;
+    }
+    storage.asyncSpanConsumer().accept(spans, new Callback<Void>() {
+      @Override public void onSuccess(@Nullable Void value) {
+        long endTS = (new Date()).getTime();
+        synchronized (task) {
+          task = task - 1;
+          lastTS = endTS;
+        }
+      }
+
+      @Override public void onError(Throwable t) {
+      }
+    });
     // TODO: sleep?
   }
 
@@ -80,6 +101,7 @@ public class Entry {
         source = new BufferedReader(new FileReader(file));
       }
       int actualLen = readLines(blockSize, res);
+      totalRecord += actualLen;
       if (actualLen > 0)
         putInStorage(res, actualLen, storage);
 
@@ -96,10 +118,18 @@ public class Entry {
       int blockSize = parseCmdLine(args, 2, 100);
 
       Entry me = new Entry();
+      long startTS = (new Date()).getTime();
       me.Run(file, times, blockSize);
       System.out.println("Sleep");
       while (true) {
         TimeUnit.SECONDS.sleep(1);
+        synchronized (me.task) {
+          if (me.task == 0) {
+            System.out.println("Done, total time = " + Long.toString(me.lastTS - startTS));
+            System.out.println("Total records = " + Long.toString(me.totalRecord));
+            System.out.println("Throughput = " + Double.toString((  (double)me.totalRecord) * 1000 / (double)(me.lastTS - startTS)  ));
+          }
+        }
       }
   }
 
