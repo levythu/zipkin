@@ -18,20 +18,39 @@ import static zipkin.storage.Callback.NOOP;
 import zipkin.storage.Callback;
 import zipkin.storage.deltafs.DeltaFSStorage;
 
+import javax.sql.DataSource;
+import zipkin.storage.mysql.MySQLStorage;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.Executors;
+import com.zaxxer.hikari.HikariDataSource;
+
 public class Entry {
 
   private StorageComponent getTestedStorageComponent() {
     // In-mem:
-    return InMemoryStorage.builder()
-      .strictTraceId(true)
-      .maxSpanCount(Integer.MAX_VALUE)
-      .build();
+    // return InMemoryStorage.builder()
+    //   .strictTraceId(true)
+    //   .maxSpanCount(Integer.MAX_VALUE)
+    //   .build();
 
     // DeltaFS:
     // return DeltaFSStorage.builder()
     //   .strictTraceId(true)
     //   .maxSpanCount(Integer.MAX_VALUE)
     //   .build();
+
+    // MySQL
+    HikariDataSource result = new HikariDataSource();
+    result.setDriverClassName("org.mariadb.jdbc.Driver");
+    result.setJdbcUrl("jdbc:mysql://ec2-34-234-225-200.compute-1.amazonaws.com:3306/test?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8");
+    result.setMaximumPoolSize(30);
+    result.setUsername("root");
+    result.setPassword("*");
+    return MySQLStorage.builder()
+        .strictTraceId(true)
+        .executor(Executors.newFixedThreadPool(30))
+        .datasource(result)
+        .build();
   }
 
   public static int parseCmdLine(String[] args, int pos, int def) {
@@ -98,6 +117,7 @@ public class Entry {
           return;
         }
         times--;
+        System.out.println("left time = " + Integer.toString(times));
         source = new BufferedReader(new FileReader(file));
       }
       int actualLen = readLines(blockSize, res);

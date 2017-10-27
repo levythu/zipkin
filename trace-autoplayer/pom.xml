@@ -57,6 +57,21 @@
         <groupId>${project.groupId}</groupId>
         <artifactId>zipkin-storage-deltafs</artifactId>
       </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>zipkin-storage-mysql</artifactId>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mariadb.jdbc</groupId>
+        <artifactId>mariadb-java-client</artifactId>
+      </dependency>
+
+      <dependency>
+        <groupId>com.zaxxer</groupId>
+        <artifactId>HikariCP</artifactId>
+      </dependency>
   </dependencies>
 
   <profiles>
