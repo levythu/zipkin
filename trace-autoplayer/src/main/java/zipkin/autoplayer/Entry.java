@@ -61,7 +61,7 @@ public class Entry {
         .keyspace("zipkin3")
         .contactPoints("ec2-54-236-232-202.compute-1.amazonaws.com")
         // .localDc("ec2-54-236-232-202.compute-1.amazonaws.com")
-        .maxConnections(30)
+        .maxConnections(100)
         .ensureSchema(true)
         .useSsl(false)
         .username("cassandra")
@@ -97,13 +97,26 @@ public class Entry {
   public Long lastTS = 0L;
   public long totalRecord = 0L;
 
+  public long throttleReq = 20;
+
   public void putInStorage(String[] str, int len, AsyncSpanConsumer storage) {
     ArrayList<Span> spans = new ArrayList<Span>();
     for (int i = 0; i < len; i++) {
       spans.add(Codec.JSON.readSpan(str[i].getBytes()));
     }
+    long currentTask;
     synchronized (task) {
       task = task + 1;
+      currentTask = task;
+    }
+    while (currentTask > throttleReq) {
+      System.out.println("Throttled waiting... ");
+      try {
+        TimeUnit.MILLISECONDS.sleep(500);
+      } catch (Throwable e) { }
+      synchronized (task) {
+        currentTask = task;
+      }
     }
     storage.accept(spans, new Callback<Void>() {
       @Override public void onSuccess(@Nullable Void value) {
@@ -115,9 +128,9 @@ public class Entry {
       }
 
       @Override public void onError(Throwable t) {
+        System.out.println("Error!" + t.toString());
       }
     });
-    // TODO: sleep?
   }
 
   public void Run(String file, int times, int blockSize) throws Throwable {
