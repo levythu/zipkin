@@ -13,9 +13,11 @@ import zipkin.Span;
 import zipkin.Codec;
 import zipkin.storage.SpanStore;
 import zipkin.storage.StorageComponent;
+import zipkin.storage.AsyncSpanConsumer;
 import zipkin.storage.InMemoryStorage;
 import static zipkin.storage.Callback.NOOP;
 import zipkin.storage.Callback;
+
 import zipkin.storage.deltafs.DeltaFSStorage;
 
 import javax.sql.DataSource;
@@ -23,6 +25,8 @@ import zipkin.storage.mysql.MySQLStorage;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.Executors;
 import com.zaxxer.hikari.HikariDataSource;
+
+import zipkin.storage.cassandra3.Cassandra3Storage;
 
 public class Entry {
 
@@ -40,16 +44,29 @@ public class Entry {
     //   .build();
 
     // MySQL
-    HikariDataSource result = new HikariDataSource();
-    result.setDriverClassName("org.mariadb.jdbc.Driver");
-    result.setJdbcUrl("jdbc:mysql://ec2-34-234-225-200.compute-1.amazonaws.com:3306/test?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8");
-    result.setMaximumPoolSize(30);
-    result.setUsername("root");
-    result.setPassword("*");
-    return MySQLStorage.builder()
-        .strictTraceId(true)
-        .executor(Executors.newFixedThreadPool(30))
-        .datasource(result)
+    // HikariDataSource result = new HikariDataSource();
+    // result.setDriverClassName("org.mariadb.jdbc.Driver");
+    // result.setJdbcUrl("jdbc:mysql://ec2-34-234-225-200.compute-1.amazonaws.com:3306/test?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8");
+    // result.setMaximumPoolSize(30);
+    // result.setUsername("root");
+    // result.setPassword("levy-12345-docker");
+    // return MySQLStorage.builder()
+    //     .strictTraceId(true)
+    //     .executor(Executors.newFixedThreadPool(30))
+    //     .datasource(result)
+    //     .build();
+
+    // Cassandra3
+    return Cassandra3Storage.builder()
+        .keyspace("zipkin3")
+        .contactPoints("ec2-54-236-232-202.compute-1.amazonaws.com")
+        // .localDc("ec2-54-236-232-202.compute-1.amazonaws.com")
+        .maxConnections(30)
+        .ensureSchema(true)
+        .useSsl(false)
+        .username("cassandra")
+        .password("cassandra")
+        .indexFetchMultiplier(3)
         .build();
   }
 
@@ -80,7 +97,7 @@ public class Entry {
   public Long lastTS = 0L;
   public long totalRecord = 0L;
 
-  public void putInStorage(String[] str, int len, StorageComponent storage) {
+  public void putInStorage(String[] str, int len, AsyncSpanConsumer storage) {
     ArrayList<Span> spans = new ArrayList<Span>();
     for (int i = 0; i < len; i++) {
       spans.add(Codec.JSON.readSpan(str[i].getBytes()));
@@ -88,7 +105,7 @@ public class Entry {
     synchronized (task) {
       task = task + 1;
     }
-    storage.asyncSpanConsumer().accept(spans, new Callback<Void>() {
+    storage.accept(spans, new Callback<Void>() {
       @Override public void onSuccess(@Nullable Void value) {
         long endTS = (new Date()).getTime();
         synchronized (task) {
@@ -109,6 +126,7 @@ public class Entry {
         "times, with blocksize = " + Integer.toString(blockSize));
 
     StorageComponent storage = getTestedStorageComponent();
+    AsyncSpanConsumer comsumer = storage.asyncSpanConsumer();
 
     String[] res = new String[blockSize];
     while (true) {
@@ -123,7 +141,7 @@ public class Entry {
       int actualLen = readLines(blockSize, res);
       totalRecord += actualLen;
       if (actualLen > 0)
-        putInStorage(res, actualLen, storage);
+        putInStorage(res, actualLen, comsumer);
 
       if (actualLen < blockSize) {
         source = null;

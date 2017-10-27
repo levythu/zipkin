@@ -64,6 +64,11 @@
       </dependency>
 
       <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>zipkin-storage-cassandra3</artifactId>
+      </dependency>
+
+      <dependency>
         <groupId>org.mariadb.jdbc</groupId>
         <artifactId>mariadb-java-client</artifactId>
       </dependency>
