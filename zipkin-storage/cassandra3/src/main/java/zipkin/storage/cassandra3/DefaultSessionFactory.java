@@ -120,9 +120,11 @@ final class DefaultSessionFactory implements Cassandra3Storage.SessionFactory {
             : new RoundRobinPolicy()
         // This can select remote, but LatencyAwarePolicy will prefer local
     ).build()));
-    builder.withPoolingOptions(new PoolingOptions().setMaxConnectionsPerHost(
-        HostDistance.LOCAL, cassandra.maxConnections
-    ));
+    builder.withPoolingOptions(new PoolingOptions()
+      .setMaxConnectionsPerHost(HostDistance.LOCAL, cassandra.maxConnections)
+      .setMaxConnectionsPerHost(HostDistance.REMOTE, cassandra.maxConnections)
+      .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
+      .setMaxRequestsPerConnection(HostDistance.REMOTE, 32768));
     if (cassandra.useSsl) {
       builder = builder.withSSL();
     }

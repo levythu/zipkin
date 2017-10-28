@@ -59,7 +59,7 @@ public class Entry {
     // Cassandra3
     return Cassandra3Storage.builder()
         .keyspace("zipkin3")
-        .contactPoints("ec2-54-236-232-202.compute-1.amazonaws.com")
+        .contactPoints("ec2-34-205-45-139.compute-1.amazonaws.com")
         // .localDc("ec2-54-236-232-202.compute-1.amazonaws.com")
         .maxConnections(100)
         .ensureSchema(true)
@@ -97,7 +97,7 @@ public class Entry {
   public Long lastTS = 0L;
   public long totalRecord = 0L;
 
-  public long throttleReq = 20;
+  public long throttleReq = 50;
 
   public void putInStorage(String[] str, int len, AsyncSpanConsumer storage) {
     ArrayList<Span> spans = new ArrayList<Span>();
@@ -125,6 +125,7 @@ public class Entry {
           task = task - 1;
           lastTS = endTS;
         }
+        System.out.println("Done!" );
       }
 
       @Override public void onError(Throwable t) {
