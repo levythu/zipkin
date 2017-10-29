@@ -89,6 +89,7 @@ public final class DeltaFSShuffler {
       try {
         rpcSockets.get(i).appendBatch(batchMdName.get(i), batchKey.get(i), batchValue.get(i));
       } catch (TException e) {
+        System.err.println("ThriftException:" + e.getMessage());
         LOG.warn("ThriftException:" + e.getMessage());
       }
     }
