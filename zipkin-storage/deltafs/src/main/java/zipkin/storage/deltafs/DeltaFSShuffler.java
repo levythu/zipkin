@@ -33,7 +33,7 @@ public final class DeltaFSShuffler {
 
   //============================================================================
 
-  static final String[] RPC_WRAPPER_HOST = {"localhost"};
+  public static final String[] RPC_WRAPPER_HOST = {"localhost"};
   static final int[] RPC_WRAPPER_PORT = {9090};
 
   private ArrayList<DeltaFSKVStore.Client> rpcSockets;

@@ -38,10 +38,10 @@ public class Entry {
     //   .build();
 
     // DeltaFS:
-    // return DeltaFSStorage.builder()
-    //   .strictTraceId(true)
-    //   .maxSpanCount(Integer.MAX_VALUE)
-    //   .build();
+    return DeltaFSStorage.builder()
+      .strictTraceId(true)
+      .maxSpanCount(Integer.MAX_VALUE)
+      .build();
 
     // MySQL
     // HikariDataSource result = new HikariDataSource();
@@ -57,17 +57,17 @@ public class Entry {
     //     .build();
 
     // Cassandra3
-    return Cassandra3Storage.builder()
-        .keyspace("zipkin3")
-        .contactPoints("ec2-34-205-45-139.compute-1.amazonaws.com")
-        // .localDc("ec2-54-236-232-202.compute-1.amazonaws.com")
-        .maxConnections(100)
-        .ensureSchema(true)
-        .useSsl(false)
-        .username("cassandra")
-        .password("cassandra")
-        .indexFetchMultiplier(3)
-        .build();
+    // return Cassandra3Storage.builder()
+    //     .keyspace("zipkin3")
+    //     .contactPoints("ec2-34-205-45-139.compute-1.amazonaws.com")
+    //     // .localDc("ec2-54-236-232-202.compute-1.amazonaws.com")
+    //     .maxConnections(100)
+    //     .ensureSchema(true)
+    //     .useSsl(false)
+    //     .username("cassandra")
+    //     .password("cassandra")
+    //     .indexFetchMultiplier(3)
+    //     .build();
   }
 
   public static int parseCmdLine(String[] args, int pos, int def) {
