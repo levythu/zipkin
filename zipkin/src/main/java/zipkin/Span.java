@@ -213,7 +213,7 @@ public final class Span implements Comparable<Span>, Serializable { // for Spark
       return this;
     }
 
-    Builder(Span source) {
+    public Builder(Span source) {
       this.traceId = source.traceId;
       this.traceIdHigh = source.traceIdHigh;
       this.name = source.name;

@@ -99,10 +99,19 @@ public class Entry {
 
   public long throttleReq = 50;
 
-  public void putInStorage(String[] str, int len, AsyncSpanConsumer storage) {
+  public void putInStorage(String[] str, int len, AsyncSpanConsumer storage, int timeDelta, int totTime) {
     ArrayList<Span> spans = new ArrayList<Span>();
     for (int i = 0; i < len; i++) {
-      spans.add(Codec.JSON.readSpan(str[i].getBytes()));
+      Span sp = Codec.JSON.readSpan(str[i].getBytes());
+      if (timeDelta > 0) {
+        sp = (new Span.Builder(sp))
+            .id(sp.id * totTime + timeDelta)
+            .parentId(sp.parentId * totTime + timeDelta)
+            .traceId(sp.traceId * totTime + timeDelta)
+            .traceIdHigh( sp.traceIdHigh * totTime + timeDelta)
+            .build();
+      }
+      spans.add(sp);
     }
     long currentTask;
     synchronized (task) {
@@ -141,6 +150,7 @@ public class Entry {
 
     StorageComponent storage = getTestedStorageComponent();
     AsyncSpanConsumer comsumer = storage.asyncSpanConsumer();
+    int totTime = times;
 
     String[] res = new String[blockSize];
     while (true) {
@@ -155,7 +165,7 @@ public class Entry {
       int actualLen = readLines(blockSize, res);
       totalRecord += actualLen;
       if (actualLen > 0)
-        putInStorage(res, actualLen, comsumer);
+        putInStorage(res, actualLen, comsumer, times, totTime);
 
       if (actualLen < blockSize) {
         source = null;
