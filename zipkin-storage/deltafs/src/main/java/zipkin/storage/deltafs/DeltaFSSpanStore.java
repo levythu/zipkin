@@ -94,7 +94,7 @@ public final class DeltaFSSpanStore implements SpanStore {
     deltafsShuffler.batchAppendStart();
     for (Span sp : spans) {
       try {
-        String idStr = Long.toString(sp.id);
+        String idStr = Long.toString(sp.traceId);
         String json = new String(Codec.JSON.writeSpan(sp), "UTF-8");
         deltafsShuffler.append("traces", idStr, json);
         String spanNamePair = idStr + "/" + sp.name;
