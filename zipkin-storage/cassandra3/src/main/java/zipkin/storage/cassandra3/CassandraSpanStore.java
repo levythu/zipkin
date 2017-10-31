@@ -150,16 +150,18 @@ final class CassandraSpanStore implements GuavaSpanStore {
             .and(QueryBuilder.lte("ts", QueryBuilder.bindMarker("end_ts")))
             .and(QueryBuilder.gte("duration", QueryBuilder.bindMarker("start_duration")))
             .and(QueryBuilder.lte("duration", QueryBuilder.bindMarker("end_duration")))
-            .limit(QueryBuilder.bindMarker("limit_")));
-
-    selectTraceIdsByAnnotation = session.prepare(
-        QueryBuilder.select("ts", "trace_id")
-            .from(TABLE_TRACES)
-            .where(QueryBuilder.like("all_annotations", QueryBuilder.bindMarker("annotation")))
-            .and(QueryBuilder.gte("ts_uuid", QueryBuilder.bindMarker("start_ts")))
-            .and(QueryBuilder.lte("ts_uuid", QueryBuilder.bindMarker("end_ts")))
             .limit(QueryBuilder.bindMarker("limit_"))
             .allowFiltering());
+
+    // selectTraceIdsByAnnotation = session.prepare(
+    //     QueryBuilder.select("ts", "trace_id")
+    //         .from(TABLE_TRACES)
+    //         .where(QueryBuilder.like("all_annotations", QueryBuilder.bindMarker("annotation")))
+    //         .and(QueryBuilder.gte("ts_uuid", QueryBuilder.bindMarker("start_ts")))
+    //         .and(QueryBuilder.lte("ts_uuid", QueryBuilder.bindMarker("end_ts")))
+    //         .limit(QueryBuilder.bindMarker("limit_"))
+    //         .allowFiltering());
+    selectTraceIdsByAnnotation = null;
 
     traceIdToTimestamp = row ->
       new AbstractMap.SimpleEntry<>(

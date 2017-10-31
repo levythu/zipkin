@@ -11,6 +11,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.Arrays;
+import java.lang.System;
 
 import zipkin.Span;
 import zipkin.Codec;
@@ -41,10 +42,10 @@ public class Entry {
     //   .build();
 
     // DeltaFS:
-    return DeltaFSStorage.builder()
-      .strictTraceId(true)
-      .maxSpanCount(Integer.MAX_VALUE)
-      .build();
+    // return DeltaFSStorage.builder()
+    //   .strictTraceId(true)
+    //   .maxSpanCount(Integer.MAX_VALUE)
+    //   .build();
 
     // MySQL
     // HikariDataSource result = new HikariDataSource();
@@ -60,17 +61,17 @@ public class Entry {
     //     .build();
 
     // Cassandra3
-    // return Cassandra3Storage.builder()
-    //     .keyspace("zipkin3")
-    //     .contactPoints("localhost")
-    //     // .localDc("ec2-54-236-232-202.compute-1.amazonaws.com")
-    //     .maxConnections(100)
-    //     .ensureSchema(true)
-    //     .useSsl(false)
-    //     .username("cassandra")
-    //     .password("cassandra")
-    //     .indexFetchMultiplier(3)
-    //     .build();
+    return Cassandra3Storage.builder()
+        .keyspace("zipkin3")
+        .contactPoints("localhost")
+        // .localDc("ec2-54-236-232-202.compute-1.amazonaws.com")
+        .maxConnections(100)
+        .ensureSchema(true)
+        .useSsl(false)
+        .username("cassandra")
+        .password("cassandra")
+        .indexFetchMultiplier(3)
+        .build();
   }
 
   public static int parseCmdLine(String[] args, int pos, int def) {
@@ -210,23 +211,25 @@ public class Entry {
       int spanBucket = ThreadLocalRandom.current().nextInt(0, actualLen);
       int timeDelta = ThreadLocalRandom.current().nextInt(0, totTime);
       Span thisSpan = applyDelta(spans.get(spanBucket), timeDelta, totTime);
-      long startTS = (new Date()).getTime();
-      List<Span> resTrace = sstore.getTrace(thisSpan.id);
-      long endTS = (new Date()).getTime();
+      long startTS = System.nanoTime();
+      List<Span> resTrace = sstore.getTrace(thisSpan.traceIdHigh, thisSpan.traceId);
+      long endTS = System.nanoTime();
 
-      if (resTrace.size() == 0) {
-        System.out.println("WARN: traceID = " + Long.toString(thisSpan.id) + " not found");
+      if (resTrace == null || resTrace.size() == 0) {
+        System.out.println("WARN: traceID = " + Long.toString(thisSpan.traceId) + " not found");
         continue;
       }
 
       avgResponseTime += endTS - startTS;
       totalRec++;
       {
-        System.out.println(Double.toString(((double)avgResponseTime) / totalRec));
+        System.out.println(Double.toString(((double)avgResponseTime) / totalRec / 1000 / 1000) + ":\t+" +
+            Double.toString( ((double)(endTS - startTS)) / 1000 / 1000 )
+        );
       }
     }
 
-    System.out.println("AVG latency: " + Double.toString(((double)avgResponseTime) / totalRec));
+    System.out.println("AVG latency: " + Double.toString(((double)avgResponseTime) / totalRec / 1000 / 1000));
   }
 
   public static void main(String[] args) throws Throwable {
