@@ -110,7 +110,7 @@ public class Entry {
       if (original.parentId != null)
         newSpanBuilder.parentId(original.parentId * totTime + delta);
       newSpanBuilder.traceId(original.traceId * totTime + delta);
-      newSpanBuilder.traceIdHigh( original.traceIdHigh * totTime + delta);
+      // newSpanBuilder.traceIdHigh( original.traceIdHigh * totTime + delta);
       original = newSpanBuilder.build();
     }
     return original;
@@ -216,7 +216,9 @@ public class Entry {
       long endTS = System.nanoTime();
 
       if (resTrace == null || resTrace.size() == 0) {
-        System.out.println("WARN: traceID = " + Long.toString(thisSpan.traceId) + " not found");
+        System.out.println("WARN: traceID = " + Long.toString(thisSpan.traceId) + "\\" +
+                           Long.toString(thisSpan.traceIdHigh) +
+                           " not found. TimeDelta = " + Integer.toString(timeDelta));
         continue;
       }
 

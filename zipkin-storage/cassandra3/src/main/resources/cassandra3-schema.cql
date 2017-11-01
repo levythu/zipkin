@@ -64,6 +64,15 @@ CREATE TABLE IF NOT EXISTS zipkin3.span_name_by_service (
     WITH compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'unchecked_tombstone_compaction': 'true', 'tombstone_threshold': '0.2'}
     AND default_time_to_live =  259200;
 
+
+ CREATE TABLE IF NOT EXISTS zipkin3.dependencies (
+     day          timestamp,
+     links        blob,
+     PRIMARY KEY (day)
+ )
+     WITH compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'unchecked_tombstone_compaction': 'true', 'tombstone_threshold': '0.2'}
+     AND default_time_to_live =  259200;
+
 CREATE CUSTOM INDEX IF NOT EXISTS ON zipkin3.traces (all_annotations) USING 'org.apache.cassandra.index.sasi.SASIIndex'
    WITH OPTIONS = {
     'mode': 'CONTAINS',
@@ -74,15 +83,6 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON zipkin3.traces (all_annotations) USING 'org
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON zipkin3.trace_by_service_span (duration) USING 'org.apache.cassandra.index.sasi.SASIIndex'
    WITH OPTIONS = {'mode': 'PREFIX'};
-
-
-CREATE TABLE IF NOT EXISTS zipkin3.dependencies (
-    day          timestamp,
-    links        blob,
-    PRIMARY KEY (day)
-)
-    WITH compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'unchecked_tombstone_compaction': 'true', 'tombstone_threshold': '0.2'}
-    AND default_time_to_live =  259200;
 
 //-- Empty span name list in UI with Cassandra3 storage component – https://github.com/openzipkin/zipkin/issues/1360
 DROP MATERIALIZED VIEW IF EXISTS zipkin3.trace_by_service;
