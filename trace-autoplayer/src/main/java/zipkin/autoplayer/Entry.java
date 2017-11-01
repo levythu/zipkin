@@ -143,7 +143,7 @@ public class Entry {
           task = task - 1;
           lastTS = endTS;
         }
-        System.out.println("Done!" );
+        // System.out.println("Done!" );
       }
 
       @Override public void onError(Throwable t) {
