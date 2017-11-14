@@ -161,9 +161,6 @@ public final class DeltaFSSpanStore implements SpanStore {
     } catch (Throwable e) {
       LOG.warn("Exception in reading spans: " + e.toString());
     }
-    for (String sn : spanNames) {
-      LOG.warn(" - " + sn);
-    }
     return new ArrayList<String>(spanNames);
   }
 
