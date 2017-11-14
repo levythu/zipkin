@@ -42,15 +42,15 @@ public class Entry {
     //   .build();
 
     // DeltaFS:
-    // return DeltaFSStorage.builder()
-    //   .strictTraceId(true)
-    //   .maxSpanCount(Integer.MAX_VALUE)
-    //   .build();
+    return DeltaFSStorage.builder()
+      .strictTraceId(true)
+      .maxSpanCount(Integer.MAX_VALUE)
+      .build();
 
     // MySQL
     // HikariDataSource result = new HikariDataSource();
     // result.setDriverClassName("org.mariadb.jdbc.Driver");
-    // result.setJdbcUrl("jdbc:mysql://52.90.238.188:3306/test?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8");
+    // result.setJdbcUrl("jdbc:mysql://ec2-107-23-224-173.compute-1.amazonaws.com:3306/test?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8");
     // result.setMaximumPoolSize(30);
     // result.setUsername("root");
     // result.setPassword("levy-12345-docker");
@@ -61,17 +61,17 @@ public class Entry {
     //     .build();
 
     // Cassandra3
-    return Cassandra3Storage.builder()
-        .keyspace("zipkin3")
-        .contactPoints("localhost")
-        // .localDc("ec2-54-236-232-202.compute-1.amazonaws.com")
-        .maxConnections(100)
-        .ensureSchema(true)
-        .useSsl(false)
-        .username("cassandra")
-        .password("cassandra")
-        .indexFetchMultiplier(3)
-        .build();
+    // return Cassandra3Storage.builder()
+    //     .keyspace("zipkin3")
+    //     .contactPoints("localhost")
+    //     // .localDc("ec2-54-236-232-202.compute-1.amazonaws.com")
+    //     .maxConnections(100)
+    //     .ensureSchema(true)
+    //     .useSsl(false)
+    //     .username("cassandra")
+    //     .password("cassandra")
+    //     .indexFetchMultiplier(3)
+    //     .build();
   }
 
   public static int parseCmdLine(String[] args, int pos, int def) {
@@ -128,7 +128,7 @@ public class Entry {
       currentTask = task;
     }
     while (currentTask > throttleReq) {
-      System.out.println("Throttled waiting... ");
+      // System.out.println("Throttled waiting... ");
       try {
         TimeUnit.MILLISECONDS.sleep(500);
       } catch (Throwable e) { }
@@ -143,7 +143,7 @@ public class Entry {
           task = task - 1;
           lastTS = endTS;
         }
-        // System.out.println("Done!" );
+        System.out.println("Done: " + Integer.toString(timeDelta));
       }
 
       @Override public void onError(Throwable t) {
