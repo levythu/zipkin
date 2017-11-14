@@ -199,8 +199,8 @@ public class Entry {
     SpanStore sstore = storage.spanStore();
 
     source = new BufferedReader(new FileReader(file));
-    String[] res = new String[222222];
-    int actualLen = readLines(222222, res);
+    String[] res = new String[333333];
+    int actualLen = readLines(333333, res);
     ArrayList<Span> spans = new ArrayList<Span>();
     for (int i = 0; i < actualLen; i++) {
       Span sp = Codec.JSON.readSpan(res[i].getBytes());
@@ -245,6 +245,13 @@ public class Entry {
       if (args.length > 3 && args[3].equals("READ")) {
         // xxx filename, readtimes, scalaFactor READ
         me.RunRead(file, times, blockSize);
+      } else if (file.equals("ANA")) {
+        // xxx ANA, file1, file2, fil3, fil4...
+        Ana ana = new Ana();
+        for (int i = 1; i < args.length; i++) {
+          ana.RunAnalysis(args[i]);
+        }
+        ana.ReportAll();
       } else {
         // xxx filename, writeRuns, batchSize
         long startTS = (new Date()).getTime();
