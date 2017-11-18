@@ -99,6 +99,7 @@ public final class DeltaFSSpanStore implements SpanStore {
         deltafsShuffler.append("traces", idStr, json);
         String spanNamePair = idStr + "/" + sp.name;
         deltafsShuffler.appendHost("services", "me", spanNamePair, "localhost");
+        deltafsShuffler.appendHost("services", sp.name, idStr, "localhost");
       } catch (Throwable e) {
         LOG.warn("Exception in appending spans: " + e.toString());
       }
@@ -109,7 +110,24 @@ public final class DeltaFSSpanStore implements SpanStore {
 
   @Override public List<List<Span>> getTraces(QueryRequest request) {
     List<List<Span>> placeholder = new LinkedList<List<Span>>();
-    warnNotImpl("getTraces(QueryRequest request)");
+    if (request.serviceName != null && request.spanName != null) {
+      ArrayList<String> traceList = deltafsShuffler.getHost("services", request.spanName, request.serviceName);
+      HashSet<Long> gotTraces = new HashSet<Long>();
+      for (String traceIDStr : traceList) {
+        if (traceIDStr.length() == 0) continue;
+        long traceid;
+        try {
+          traceid = Long.parseLong(traceIDStr);
+        } catch (Exception e) {
+          continue;
+        }
+        if (gotTraces.contains(traceid)) continue;
+        placeholder.add(getTrace(0L, traceid));
+        if (placeholder.size() >= request.limit) break;
+      }
+    } else {
+      warnNotImpl("getTraces(QueryRequest request)");
+    }
     return placeholder;
   }
 

@@ -19,6 +19,7 @@ import zipkin.storage.SpanStore;
 import zipkin.storage.StorageComponent;
 import zipkin.storage.AsyncSpanConsumer;
 import zipkin.storage.InMemoryStorage;
+import zipkin.storage.QueryRequest;
 import static zipkin.storage.Callback.NOOP;
 import zipkin.storage.Callback;
 
@@ -208,18 +209,31 @@ public class Entry {
     }
 
     for (int i = 0; i < times; i++) {
-      int spanBucket = ThreadLocalRandom.current().nextInt(0, actualLen);
-      int timeDelta = ThreadLocalRandom.current().nextInt(0, totTime);
-      Span thisSpan = applyDelta(spans.get(spanBucket), timeDelta, totTime);
-      long startTS = System.nanoTime();
-      List<Span> resTrace = sstore.getTrace(thisSpan.traceIdHigh, thisSpan.traceId);
-      long endTS = System.nanoTime();
+      long startTS, endTS;
+      if (totTime >= 0) {
+        int spanBucket = ThreadLocalRandom.current().nextInt(0, actualLen);
+        int timeDelta = ThreadLocalRandom.current().nextInt(0, totTime);
+        Span thisSpan = applyDelta(spans.get(spanBucket), timeDelta, totTime);
+        startTS = System.nanoTime();
+        List<Span> resTrace = sstore.getTrace(thisSpan.traceIdHigh, thisSpan.traceId);
+        endTS = System.nanoTime();
 
-      if (resTrace == null || resTrace.size() == 0) {
-        System.out.println("WARN: traceID = " + Long.toString(thisSpan.traceId) + "\\" +
-                           Long.toString(thisSpan.traceIdHigh) +
-                           " not found. TimeDelta = " + Integer.toString(timeDelta));
-        continue;
+        if (resTrace == null || resTrace.size() == 0) {
+          System.out.println("WARN: traceID = " + Long.toString(thisSpan.traceId) + "\\" +
+                             Long.toString(thisSpan.traceIdHigh) +
+                             " not found. TimeDelta = " + Integer.toString(timeDelta));
+          continue;
+        }
+      } else {
+        int spanBucket = ThreadLocalRandom.current().nextInt(0, actualLen);
+        Span thisSpan = spans.get(spanBucket);
+        QueryRequest req = QueryRequest.builder().serviceName("localhost")
+                                                 .spanName(thisSpan.name)
+                                                 .limit(10)
+                                                 .build();
+       startTS = System.nanoTime();
+       List<List<Span>> resTrace = sstore.getTraces(req);
+       endTS = System.nanoTime();
       }
 
       avgResponseTime += endTS - startTS;
