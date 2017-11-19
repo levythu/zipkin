@@ -35,6 +35,7 @@ import zipkin.storage.cassandra3.Cassandra3Storage;
 
 public class Entry {
 
+  private boolean isDeltaFS = false;
   private StorageComponent getTestedStorageComponent() {
     // In-mem:
     // return InMemoryStorage.builder()
@@ -43,25 +44,28 @@ public class Entry {
     //   .build();
 
     // DeltaFS:
-    return DeltaFSStorage.builder()
-      .strictTraceId(true)
-      .maxSpanCount(Integer.MAX_VALUE)
-      .build();
+    // isDeltaFS = true;
+    // return DeltaFSStorage.builder()
+    //   .strictTraceId(true)
+    //   .maxSpanCount(Integer.MAX_VALUE)
+    //   .build();
 
     // MySQL
-    // HikariDataSource result = new HikariDataSource();
-    // result.setDriverClassName("org.mariadb.jdbc.Driver");
-    // result.setJdbcUrl("jdbc:mysql://ec2-107-23-224-173.compute-1.amazonaws.com:3306/test?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8");
-    // result.setMaximumPoolSize(30);
-    // result.setUsername("root");
-    // result.setPassword("levy-12345-docker");
-    // return MySQLStorage.builder()
-    //     .strictTraceId(true)
-    //     .executor(Executors.newFixedThreadPool(30))
-    //     .datasource(result)
-    //     .build();
+    HikariDataSource result = new HikariDataSource();
+    result.setDriverClassName("org.mariadb.jdbc.Driver");
+    result.setJdbcUrl("jdbc:mysql://localhost:3306/test?autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8");
+    result.setMaximumPoolSize(30);
+    result.setUsername("root");
+    result.setPassword("levy-12345-docker");
+    isDeltaFS = false;
+    return MySQLStorage.builder()
+        .strictTraceId(true)
+        .executor(Executors.newFixedThreadPool(30))
+        .datasource(result)
+        .build();
 
     // Cassandra3
+    // isDeltaFS = false;
     // return Cassandra3Storage.builder()
     //     .keyspace("zipkin3")
     //     .contactPoints("localhost")
@@ -227,8 +231,9 @@ public class Entry {
       } else {
         int spanBucket = ThreadLocalRandom.current().nextInt(0, actualLen);
         Span thisSpan = spans.get(spanBucket);
-        QueryRequest req = QueryRequest.builder().serviceName("localhost")
+        QueryRequest req = QueryRequest.builder().serviceName(this.isDeltaFS ? "localhost": "c*:test cluster:localhost")
                                                  .spanName(thisSpan.name)
+                                                 .minDuration(1L)
                                                  .limit(10)
                                                  .build();
        startTS = System.nanoTime();
